@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import axios from 'axios';
 import jwt from 'jsonwebtoken';
+import { verifyToken } from '@k-hub/shared';
 
 export function checkPermission(permissionName: string) {
     return async (req: Request, res: Response, next: NextFunction) => {
@@ -45,7 +46,7 @@ export function isAuthenticated(req: Request, res: Response, next: NextFunction)
     }
     try {
         const token = accessToken.split(" ")[1];
-        const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET_SIGNATURE!) as any;
+        const decoded = verifyToken(token, process.env.ACCESS_TOKEN_SECRET_SIGNATURE!)
         if (!decoded.id) {
             res.status(401).json({
                 message: "Invalid token payload"

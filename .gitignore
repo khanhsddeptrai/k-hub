@@ -3,3 +3,4 @@ dist/
 .env
 .env.* # tránh các file .env.local, .env.prod
 *.log
+.pnpm/
