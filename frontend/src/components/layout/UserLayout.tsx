@@ -1,20 +1,20 @@
 import { Box, CssBaseline, Toolbar } from '@mui/material';
 import { Outlet } from 'react-router-dom';
 import Header from './Header';
-import AdminSidebar from './AdminSidebar';
+import UserSidebar from './UserSidebar';
 
-const AdminLayout = () => {
+const UserLayout = () => {
     return (
         <Box sx={{ display: 'flex' }}>
             <CssBaseline />
-            <Header width="calc(100% - 220px)" />
-            <AdminSidebar />
+            <Header width="100%" />
+            <UserSidebar />
             <Box
                 component="main"
                 sx={{
-                    flexGrow: 1,
-                    p: 3,
-                    width: 'calc(100% - 240px)',
+                    pl: 2,
+                    pt: 0.5,
+                    width: 'calc(100% - 220px)',
                     minHeight: '100vh',
                     backgroundColor: '#f5f5f5'
                 }}
@@ -26,4 +26,4 @@ const AdminLayout = () => {
     );
 };
 
-export default AdminLayout;
+export default UserLayout;

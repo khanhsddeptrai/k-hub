@@ -7,13 +7,13 @@ import {
 } from '@mui/icons-material';
 import { NavLink } from 'react-router-dom';
 
-const Sidebar = () => {
+const AdminSidebar = () => {
     const theme = useTheme();
 
     const navItems = [
         { text: 'Dashboard', icon: <DashboardIcon />, path: '/admin' },
         { text: 'Users', icon: <UsersIcon />, path: '/admin/users' },
-        { text: 'Posts', icon: <PostsIcon />, path: '/' },
+        { text: 'Posts', icon: <PostsIcon />, path: '/admin/posts' },
         { text: 'Settings', icon: <SettingsIcon />, path: '/' }
     ];
 
@@ -21,10 +21,10 @@ const Sidebar = () => {
         <Drawer
             variant="permanent"
             sx={{
-                width: 240,
+                width: 220,
                 flexShrink: 0,
                 '& .MuiDrawer-paper': {
-                    width: 240,
+                    width: 220,
                     boxSizing: 'border-box',
                     backgroundColor: theme.palette.primary.main,
                     color: theme.palette.primary.contrastText
@@ -32,13 +32,13 @@ const Sidebar = () => {
             }}
         >
             <Toolbar /> {/* Spacer for header */}
-            <List>
+            <List sx={{ padding: 0 }}>
                 {navItems.map((item) => (
                     <ListItem
-                        // button
                         key={item.text}
                         component={NavLink}
                         to={item.path}
+                        end={item.path === '/admin'} // Chỉ áp dụng end cho Dashboard
                         style={{ color: 'white' }}
                         sx={{
                             '&.active': {
@@ -61,4 +61,4 @@ const Sidebar = () => {
     );
 };
 
-export default Sidebar;
+export default AdminSidebar;

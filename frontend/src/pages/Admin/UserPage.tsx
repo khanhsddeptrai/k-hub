@@ -3,12 +3,14 @@ import {
     Box, Typography, Table, TableBody, TableCell, TableContainer, TableHead,
     TableRow, Paper, CircularProgress, Alert, Avatar, Chip, IconButton, Tooltip,
     Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, MenuItem,
-    Select, FormControl, InputLabel
+    FormControl, InputLabel,
+    Select
 } from '@mui/material';
 import {
     Edit as EditIcon,
     Delete as DeleteIcon,
-    Visibility as ViewIcon
+    Visibility as ViewIcon,
+    Add as AddIcon
 } from '@mui/icons-material';
 import { fetchAuthInfo, fetchAllProfiles } from '../../apis/apis';
 
@@ -37,7 +39,13 @@ const UserManagement = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [selectedUser, setSelectedUser] = useState<MergedUser | null>(null);
-    const [dialogType, setDialogType] = useState<'view' | 'edit' | 'delete' | null>(null);
+    const [dialogType, setDialogType] = useState<'view' | 'edit' | 'delete' | 'add' | null>(null);
+    const [newUser, setNewUser] = useState({
+        name: '',
+        email: '',
+        phone: '',
+        roleId: ''
+    });
 
     useEffect(() => {
         const fetchData = async () => {
@@ -68,14 +76,19 @@ const UserManagement = () => {
         };
     });
 
-    const handleOpenDialog = (type: 'view' | 'edit' | 'delete', user: MergedUser) => {
-        setSelectedUser(user);
+    const handleOpenDialog = (type: 'view' | 'edit' | 'delete' | 'add', user?: MergedUser) => {
+        if (type === 'add') {
+            setNewUser({ name: '', email: '', phone: '', roleId: '' });
+        } else {
+            setSelectedUser(user || null);
+        }
         setDialogType(type);
     };
 
     const handleCloseDialog = () => {
         setDialogType(null);
         setSelectedUser(null);
+        setNewUser({ name: '', email: '', phone: '', roleId: '' });
     };
 
     const handleSave = async () => {
@@ -97,6 +110,28 @@ const UserManagement = () => {
             handleCloseDialog();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Update failed');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleAddUser = async () => {
+        try {
+            setLoading(true);
+            // Gọi API thêm user ở đây
+            // await addUser(newUser);
+
+            // Sau khi thêm thành công, refetch data
+            const [authData, profileData] = await Promise.all([
+                fetchAuthInfo(),
+                fetchAllProfiles()
+            ]);
+            setAuthUsers(authData);
+            setProfiles(profileData);
+
+            handleCloseDialog();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Add user failed');
         } finally {
             setLoading(false);
         }
@@ -144,9 +179,18 @@ const UserManagement = () => {
 
     return (
         <Box sx={{ p: 1 }}>
-            <Typography variant="h4" gutterBottom>
-                Quản lý Người dùng
-            </Typography>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                <Typography variant="h4" gutterBottom>
+                    Quản lý Người dùng
+                </Typography>
+                <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => handleOpenDialog('add')}
+                >
+                    Thêm người dùng
+                </Button>
+            </Box>
 
             <TableContainer component={Paper} sx={{ mt: 3 }}>
                 <Table>
@@ -183,7 +227,6 @@ const UserManagement = () => {
                                         />
                                     ))}
                                 </TableCell>
-
                                 <TableCell align="center">
                                     <Tooltip title="Xem chi tiết">
                                         <IconButton
@@ -344,6 +387,76 @@ const UserManagement = () => {
                         disabled={loading}
                     >
                         {loading ? <CircularProgress size={24} /> : 'Lưu'}
+                    </Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Dialog thêm người dùng */}
+            <Dialog open={dialogType === 'add'} onClose={handleCloseDialog}>
+                <DialogTitle>Thêm người dùng mới</DialogTitle>
+                <DialogContent>
+                    <Box sx={{ mt: 2 }}>
+                        <TextField
+                            fullWidth
+                            label="Họ tên"
+                            value={newUser.name}
+                            onChange={(e) => setNewUser({
+                                ...newUser,
+                                name: e.target.value
+                            })}
+                            sx={{ mb: 2 }}
+                        />
+                        <TextField
+                            fullWidth
+                            label="Email"
+                            value={newUser.email}
+                            onChange={(e) => setNewUser({
+                                ...newUser,
+                                email: e.target.value
+                            })}
+                            sx={{ mb: 2 }}
+                        />
+                        <TextField
+                            fullWidth
+                            label="Số điện thoại"
+                            value={newUser.phone}
+                            onChange={(e) => setNewUser({
+                                ...newUser,
+                                phone: e.target.value
+                            })}
+                            sx={{ mb: 2 }}
+                        />
+                        <FormControl fullWidth sx={{ mb: 2 }}>
+                            <InputLabel>Vai trò</InputLabel>
+                            <Select
+                                label="Vai trò"
+                                value={newUser.roleId}
+                                onChange={(e) => setNewUser({
+                                    ...newUser,
+                                    roleId: e.target.value
+                                })}
+                            >
+                                {authUsers.flatMap(u => u.roles)
+                                    .filter((role, index, self) =>
+                                        index === self.findIndex(r => r._id === role._id)
+                                    )
+                                    .map(role => (
+                                        <MenuItem key={role._id} value={role._id}>
+                                            {role.name}
+                                        </MenuItem>
+                                    ))}
+                            </Select>
+                        </FormControl>
+                    </Box>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCloseDialog}>Hủy</Button>
+                    <Button
+                        onClick={handleAddUser}
+                        variant="contained"
+                        disabled={loading || !newUser.name || !newUser.email || !newUser.roleId}
+                    >
+                        {loading ? <CircularProgress size={24} /> : 'Thêm'}
                     </Button>
                 </DialogActions>
             </Dialog>

@@ -7,16 +7,22 @@ import { ThemeProvider } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import { BrowserRouter } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
+import { Provider } from 'react-redux';
+import store, { persistor } from './store/index.ts';
+import { PersistGate } from 'redux-persist/integration/react'
 
 createRoot(document.getElementById('root')!).render(
   // <StrictMode>
-
   // </StrictMode>,
   <BrowserRouter>
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <App />
-      <ToastContainer position="bottom-left" theme="colored" />
-    </ThemeProvider>
+    <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <App />
+          <ToastContainer position="bottom-left" theme="colored" />
+        </ThemeProvider>
+      </PersistGate>
+    </Provider>
   </BrowserRouter>
 )

@@ -2,13 +2,15 @@ import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
-import { Box } from '@mui/material';
 import authorizedAxiosInstance from '../utils/authorizedAxios';
-import type { LoginResponse } from './Login';
+import { useDispatch } from 'react-redux';
+import { updateUserRedux } from '../store/slices/userSlice';
+import Loading from '../components/ui/Loading';
 
 const GoogleCallback = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const dispatch = useDispatch();
 
     useEffect(() => {
         const handleCallback = async () => {
@@ -50,7 +52,7 @@ const GoogleCallback = () => {
                     const googleUser = userInfoResponse.data;
 
                     // Gửi thông tin đến backend để đăng nhập
-                    const res = await authorizedAxiosInstance.post<LoginResponse>(
+                    const res = await authorizedAxiosInstance.post(
                         'http://localhost:8080/api/auth/google-login',
                         {
                             email: googleUser.email,
@@ -61,15 +63,33 @@ const GoogleCallback = () => {
                     );
 
                     const loginData = res.data;
+                    console.log("login data: ", loginData)
+
                     localStorage.setItem('accessToken', loginData.data.accessToken);
                     localStorage.setItem('refreshToken', loginData.data.refreshToken || '');
-                    localStorage.setItem('userInfo', JSON.stringify(loginData.data.payload));
+
+                    const userRedux = {
+                        id: loginData.data.payload?.id,
+                        email: loginData.data.payload?.email,
+                        roles: loginData.data.payload?.roles,
+                        name: googleUser.name,
+                        avatar: googleUser.picture,
+                        // address: userProfile?.data.address,
+                        // phone: userProfile?.data.phone,
+                    }
+
+                    dispatch(updateUserRedux({
+                        accessToken: loginData.data.accessToken,
+                        refreshToken: loginData.data.refreshToken,
+                        user: userRedux
+                    }))
+
                     toast.success(loginData.message);
                     navigate('/my-profile');
                 } catch (error) {
                     console.error('Error during Google login:', error);
                     toast.error('Đăng nhập Google thất bại');
-                    navigate('/login');
+                    navigate('/');
                 }
             }
         };
@@ -77,7 +97,7 @@ const GoogleCallback = () => {
         handleCallback();
     }, [navigate, location]);
 
-    return <Box>Đang xử lý đăng nhập...</Box>;
+    return <Loading message="Đang xử lý đăng nhập Google..." />
 };
 
 export default GoogleCallback;

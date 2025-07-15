@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from "react";
-import authorizedAxiosInstance from "../utils/authorizedAxios";
-import { toast } from "react-toastify";
-import { Avatar, Button } from "@mui/material";
+import React from "react";
+// import { toast } from "react-toastify";
+import { Avatar, Box, Button } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+
+import { useSelector, useDispatch } from 'react-redux';
+import { type RootState } from "../store";
+import { logoutUserRedux } from "../store/slices/userSlice";
 
 interface Profile {
     id?: string;
@@ -13,50 +16,31 @@ interface Profile {
     dateOfBirth: string;
 }
 
-interface ProfileDataRespone {
-    statusCode: number;
-    message: string;
-    data: Profile;
-}
-
 function Profile(): React.ReactElement {
-    const [profile, setProfile] = useState<Profile>()
+    // const [profile, setProfile] = useState<Profile>()
     const navigate = useNavigate()
-
-    useEffect(() => {
-        const fetchProfileData = async () => {
-            let userInfo = localStorage.getItem("userInfo");
-            if (!userInfo) {
-                toast.error("You need login to view profile!");
-            }
-            const userId = JSON.parse(userInfo!).id;
-            try {
-                const res = await authorizedAxiosInstance
-                    .get<ProfileDataRespone>(`http://localhost:8082/api/user/profile/${userId}`);
-                console.log('Profile Data:', res.data);
-                setProfile(res.data.data);
-            } catch (error) {
-                console.error('Error fetching user data:', error);
-                toast.error('Không thể lấy danh sách người dùng, vui lòng thử lại.');
-            }
-        };
-        fetchProfileData();
-    }, []);
+    const dispatch = useDispatch();
+    const user = useSelector((state: RootState) => state.user.userInfo);
 
     async function handleLogout() {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
-        localStorage.removeItem("userInfo");
+        dispatch(logoutUserRedux())
         navigate("/login");
     }
 
     return (
-        <div>
+        <Box sx={{
+            borderLeft: '1px solid',
+            borderColor: 'divider',
+            pl: 2,
+            minHeight: '100vh'
+        }}>
             <h1>My Profile</h1>
-            <strong>Name:</strong> {profile?.name} <br />
-            <strong>Phone:</strong> {profile?.phone} <br />
-            <strong>Address:</strong> {profile?.address} <br />
-            <strong>Birthday:</strong> {profile?.dateOfBirth} <br />
+            <strong>Name:</strong> {user?.name} <br />
+            <strong>Phone:</strong> {user?.phone} <br />
+            <strong>Address:</strong> {user?.address} <br />
+            <strong>Birthday:</strong> {user?.dateOfBirth} <br />
             <Button
                 type="button"
                 variant="contained"
@@ -69,7 +53,7 @@ function Profile(): React.ReactElement {
             </Button>
             <Avatar
                 alt="User Avatar"
-                src={profile?.avatar}
+                src={user?.avatar}
                 sx={{
                     width: 60,
                     height: 60,
@@ -80,7 +64,7 @@ function Profile(): React.ReactElement {
                     }
                 }}
             />
-        </div>
+        </Box>
     )
 }
 

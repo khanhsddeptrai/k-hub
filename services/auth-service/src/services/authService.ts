@@ -8,14 +8,12 @@ import PermissionModel from "../models/permissionModel";
 import mongoose from "mongoose";
 import userModel from "../models/userModel";
 import RoleModel from "../models/roleModel";
+import { PayloadType } from "@k-hub/shared";
 
 export interface LoginResponse {
     accessToken: string;
     refreshToken: string;
-    payload: {
-        id: string;
-        email: string;
-    };
+    payload: PayloadType
 }
 
 export async function register(userData: UserType): Promise<ServiceResponse<UserType>> {
@@ -76,6 +74,7 @@ export async function login(userData: UserType): Promise<ServiceResponse<LoginRe
         const payload = {
             id: existingUser.id,
             email: existingUser.email,
+            roles: existingUser.roles
         }
 
         const accessToken = await generateToken(

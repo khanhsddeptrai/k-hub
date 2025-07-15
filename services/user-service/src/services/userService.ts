@@ -45,10 +45,8 @@ export async function updateUserProfile(userData: UserType): Promise<ServiceResp
 
 export async function getUserProfileById(userId: string): Promise<ServiceResponse<any>> {
     try {
-
         if (!userId) {
             throw new Error("User ID is required");
-
         }
 
         const user = await UserProfile.findById(userId)

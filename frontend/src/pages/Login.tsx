@@ -4,6 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import authorizedAxiosInstance from '../utils/authorizedAxios';
 import { toast } from 'react-toastify';
 import type React from 'react';
+import { useDispatch } from 'react-redux';
+import { updateUserRedux } from '../store/slices/userSlice';
 
 interface LoginFormInputs {
     email: string;
@@ -17,8 +19,9 @@ export interface LoginResponse {
         accessToken: string;
         refreshToken: string;
         payload?: {
-            userId: number;
+            id: string;
             email: string;
+            roles: string[]
         }
     }
 }
@@ -47,7 +50,7 @@ const getOAthGoogleUrl = () => {
 const getFacebookOAuthUrl = () => {
     const { VITE_FACEBOOK_CLIENT_ID, VITE_FACEBOOK_REDIRECT_URI } = import.meta.env;
     const state = Math.random().toString(36).substring(2);
-    localStorage.setItem('oauth_facebook_state', state); // Lưu state để chống CSRF
+    localStorage.setItem('oauth_facebook_state', state); // Lưu state để chống CSRF,
     const options = {
         client_id: VITE_FACEBOOK_CLIENT_ID,
         redirect_uri: VITE_FACEBOOK_REDIRECT_URI,
@@ -59,11 +62,9 @@ const getFacebookOAuthUrl = () => {
     return `https://www.facebook.com/v18.0/dialog/oauth?${qs.toString()}`;
 };
 
-
-
-
 function LoginForm(): React.ReactElement {
     const navigate = useNavigate();
+    const dispatch = useDispatch();
     const {
         register,
         handleSubmit,
@@ -80,15 +81,38 @@ function LoginForm(): React.ReactElement {
             ...data,
             email: data.email.toLowerCase().trim(),
         };
-        const res = await authorizedAxiosInstance.post<LoginResponse>(`http://localhost:8080/api/auth/login`, normalizedInput);
-        console.log("check res user: ", res);
+        const res = await authorizedAxiosInstance.post(`http://localhost:8080/api/auth/login`, normalizedInput);
         const loginData = res.data;
+        console.log("API response:", loginData);
+
         localStorage.setItem('accessToken', loginData.data.accessToken);
         localStorage.setItem('refreshToken', loginData.data.refreshToken);
-        localStorage.setItem('userInfo', JSON.stringify(loginData.data.payload));
+
+        let userProfile;
+        if (loginData.data.payload?.id) {
+            const userId = loginData.data.payload.id
+            const resProfile = await authorizedAxiosInstance.get(`http://localhost:8082/api/user/profile/${userId}`)
+            userProfile = resProfile.data
+        }
+
+        const userRedux = {
+            id: loginData.data.payload?.id,
+            email: loginData.data.payload?.email,
+            roles: loginData.data.payload?.roles,
+            name: userProfile?.data.name,
+            address: userProfile?.data.address,
+            avatar: userProfile?.data.avatar,
+            phone: userProfile?.data.phone,
+        }
+
+        dispatch(updateUserRedux({
+            accessToken: loginData.data.accessToken,
+            refreshToken: loginData.data.refreshToken,
+            user: userRedux,
+        }))
+
         toast.success(loginData.message);
-        navigate('/my-profile');
-        console.log('Response:', loginData);
+        navigate('/');
     };
 
     return (
